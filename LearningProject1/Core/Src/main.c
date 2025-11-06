@@ -87,6 +87,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
+  GPIO_PinState state = GPIO_PIN_RESET;
 
   /* USER CODE END 2 */
 
@@ -97,10 +98,19 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  HAL_GPIO_WritePin(Green_LED_GPIO_Port, Green_LED_Pin, GPIO_PIN_SET);
-	  HAL_Delay(300);
-	  HAL_GPIO_WritePin(Green_LED_GPIO_Port, Green_LED_Pin, GPIO_PIN_RESET);
-	  HAL_Delay(100);
+	  state = HAL_GPIO_ReadPin(Blue_Button_GPIO_Port, Blue_Button_Pin);
+
+	  // if/else block to blink the LED if button is pressed
+	  // GPIO_PIN_RESET is apparently high voltage for input, while it's low voltage for output
+	  if (state == GPIO_PIN_RESET) {
+		  HAL_GPIO_TogglePin(Green_LED_GPIO_Port, Green_LED_Pin); // Causes LED to flash
+	  HAL_Delay(1000);
+	  } else {
+		  HAL_GPIO_WritePin(Green_LED_GPIO_Port, Green_LED_Pin, GPIO_PIN_RESET);
+	  }
+
+//	  // Simpler alternative that turns LED on if button pressed
+//	  HAL_GPIO_WritePin(Green_LED_GPIO_Port, Green_LED_Pin, state - 1);
   }
   /* USER CODE END 3 */
 }
@@ -165,10 +175,17 @@ static void MX_GPIO_Init(void)
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(Green_LED_GPIO_Port, Green_LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : Blue_Button_Pin */
+  GPIO_InitStruct.Pin = Blue_Button_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Blue_Button_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : Green_LED_Pin */
   GPIO_InitStruct.Pin = Green_LED_Pin;
