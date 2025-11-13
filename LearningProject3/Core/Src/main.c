@@ -18,6 +18,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f4xx_ll_spi.h"
+#include "stm32f4xx_ll_utils.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -95,7 +97,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
-
+  LL_SPI_Enable(SPI2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -105,6 +107,41 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+    /**
+    D15 - X
+    D14 - X
+    D13 - X
+    D12 - X
+    D11 - Add
+    D10 - Add 
+    D9 - Add
+    D8 - Add
+    D7 - Data (MSB)
+    D6 - Data
+    D5 - Data
+    D4 - Data
+    D3 - Data
+    D2 - Data
+    D1 - Data
+    D0 - Data (LSB)
+
+    Specific values:
+    1 - Normal Mode
+    3072 - Shutdown Mode
+    
+    */
+    LL_mDelay(1000);
+    LL_SPI_TransmitData16(SPI2, 1); // Set LED matrix to normal mode (starts in shutdown)
+    LL_mDelay(1000);
+    LL_SPI_TransmitData16(SPI2, 3840); // Display Test
+    LL_mDelay(1000);
+    while(1) {
+      LL_SPI_TransmitData16(SPI2, 3072); // Shutdown
+      LL_mDelay(1000);
+      LL_SPI_TransmitData16(SPI2, 1); // Shutdown
+      LL_mDelay(1000);
+    }
   }
   /* USER CODE END 3 */
 }
