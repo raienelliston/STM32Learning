@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f446xx.h"
 #include "stm32f4xx_ll_spi.h"
 #include "stm32f4xx_ll_utils.h"
 
@@ -53,7 +54,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
-
+void Write_SPI2_Value(uint16_t);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -127,19 +128,22 @@ int main(void)
     D0 - Data (LSB)
 
     Specific values:
-    1 - Normal Mode
+    3073 - Normal Mode
     3072 - Shutdown Mode
+    2304 - No decode mode
+    2823 - Scan limit all columns (set all to on)
     
     */
-    LL_mDelay(1000);
-    LL_SPI_TransmitData16(SPI2, 1); // Set LED matrix to normal mode (starts in shutdown)
-    LL_mDelay(1000);
-    LL_SPI_TransmitData16(SPI2, 3840); // Display Test
-    LL_mDelay(1000);
+    Write_SPI2_Value(0x0C00);
+    Write_SPI2_Value(0x0C01);
+    Write_SPI2_Value(0x0900);
+    Write_SPI2_Value(0x0a01);
+    Write_SPI2_Value(0x0b07);
+    Write_SPI2_Value(0x0c01);
+    Write_SPI2_Value(0x0f00);
+
     while(1) {
-      LL_SPI_TransmitData16(SPI2, 3072); // Shutdown
-      LL_mDelay(1000);
-      LL_SPI_TransmitData16(SPI2, 1); // Shutdown
+      Write_SPI2_Value(0x0101);
       LL_mDelay(1000);
     }
   }
@@ -239,11 +243,11 @@ static void MX_SPI2_Init(void)
   /* SPI2 parameter configuration*/
   SPI_InitStruct.TransferDirection = LL_SPI_FULL_DUPLEX;
   SPI_InitStruct.Mode = LL_SPI_MODE_MASTER;
-  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_8BIT;
-  SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_LOW;
+  SPI_InitStruct.DataWidth = LL_SPI_DATAWIDTH_16BIT;
+  SPI_InitStruct.ClockPolarity = LL_SPI_POLARITY_HIGH;
   SPI_InitStruct.ClockPhase = LL_SPI_PHASE_1EDGE;
   SPI_InitStruct.NSS = LL_SPI_NSS_SOFT;
-  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV2;
+  SPI_InitStruct.BaudRate = LL_SPI_BAUDRATEPRESCALER_DIV16;
   SPI_InitStruct.BitOrder = LL_SPI_MSB_FIRST;
   SPI_InitStruct.CRCCalculation = LL_SPI_CRCCALCULATION_DISABLE;
   SPI_InitStruct.CRCPoly = 10;
@@ -329,6 +333,9 @@ static void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(LD2_GPIO_Port, LD2_Pin);
 
   /**/
+  LL_GPIO_ResetOutputPin(SPI2_CS_GPIO_Port, SPI2_CS_Pin);
+
+  /**/
   LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTC, LL_SYSCFG_EXTI_LINE13);
 
   /**/
@@ -352,12 +359,26 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+  /**/
+  GPIO_InitStruct.Pin = SPI2_CS_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(SPI2_CS_GPIO_Port, &GPIO_InitStruct);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void Write_SPI2_Value(uint16_t value) {
+  LL_GPIO_ResetOutputPin(SPI2_CS_GPIO_Port, SPI2_CS_Pin);
+  LL_SPI_TransmitData16(SPI2, value);
+  LL_GPIO_SetOutputPin(SPI2_CS_GPIO_Port, SPI2_CS_Pin);
+}
+
 
 /* USER CODE END 4 */
 
